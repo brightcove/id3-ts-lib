@@ -1,4 +1,4 @@
-# ID2-TS-LIB
+# ID3-TS-LIB
 The fat-free ID3-only MPEG2TS segment generator library!
 
 ## Installation

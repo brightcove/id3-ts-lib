@@ -1,0 +1,25 @@
+{
+  "name": "@brightcove/id3-ts-lib",
+  "version": "1.0.0",
+  "description": "The fat-free ID3-only MPEG2TS segment generator library!",
+  "private": true,
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "bin": {
+    "id3-ts" : "./bin/index.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://bithub.brightcove.com/jrivera/id3-ts-lib.git"
+  },
+  "author": "Jon-Carlos Rivera",
+  "devDependencies": {
+    "jsdoc": "^3.5.5",
+    "mocha": "^6.0.2"
+  }
+}

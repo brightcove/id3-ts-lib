@@ -85,7 +85,7 @@ const fillOutTSHeaders = (outputBuffer, destination, pid) => {
  * @param {Number} paddingNeeded - Number of bytes of padding to insert
  * @returns {Number}
  */
-const writeHeaderPadding = (outputBuffer, destination, paddingNeeded) => {
+const writeHeaderPadding = (outputBuffer, destination, paddingNeeded, id3Pid) => {
   const NEXT_PAYLOAD_START = destination + sizeOf.TS_PACKET + sizeOf.TS_HEADER_NO_ADAPTATION;
   // This is the padding remaining after fully-padding the TS first packet.
   //  - If it is less than zero, then we only need to pad a portion of the first TS packet.
@@ -104,6 +104,13 @@ const writeHeaderPadding = (outputBuffer, destination, paddingNeeded) => {
 
   let destinationStart = destination + sizeOf.TS_PACKET + paddingRemaining;
   if (paddingRemaining >= 0) {
+    generateTSHeader(
+      outputBuffer,
+      destination,
+      id3Pid,
+      1,
+      MAX_TS_PAYLOAD,
+      false);
     // The padding runneth over into the second TS packet
     destinationStart += sizeOf.TS_HEADER_NO_ADAPTATION;
 
@@ -134,19 +141,42 @@ const packetEndBoundary = (value) => Math.ceil(value / sizeOf.TS_PACKET) * sizeO
  * @param {String} data - The ID3 tag's TXXX frame payload
  * @returns {Number}
  */
-const writeID3TagChunked = (outputBuffer, destinationStart, data) => {
+const writeID3TagChunked = (outputBuffer, destinationStart, data, id3Pid) => {
   let sourceStart = 0;
   let sourceLength = packetEndBoundary(destinationStart) - destinationStart;
+  let continuityCounter = 2;
+
+  id3TagChunked(
+    outputBuffer,
+    destinationStart,
+    sourceStart,
+    Math.min(outputBuffer.length, sourceStart + sourceLength),
+    data);
+
+  sourceStart += sourceLength;
+  destinationStart += sourceLength;
+  sourceLength = MAX_TS_PAYLOAD;
 
   while (destinationStart < outputBuffer.length) {
+    generateTSHeader(
+      outputBuffer,
+      destinationStart,
+      id3Pid,
+      continuityCounter++,
+      MAX_TS_PAYLOAD,
+      false);
+
+    destinationStart += sizeOf.TS_HEADER_NO_ADAPTATION;
+
     id3TagChunked(
       outputBuffer,
       destinationStart,
       sourceStart,
       Math.min(outputBuffer.length, sourceStart + sourceLength),
       data);
+
     sourceStart += sourceLength;
-    destinationStart += sourceLength + sizeOf.TS_HEADER_NO_ADAPTATION;
+    destinationStart += sourceLength;
     sourceLength = MAX_TS_PAYLOAD;
   }
 };
@@ -170,14 +200,21 @@ const generateID3Packets = (outputBuffer, destination, options) => {
   const paddingNeeded = Math.ceil(pesPacketLength / MAX_TS_PAYLOAD) * MAX_TS_PAYLOAD - pesPacketLength;
 
   // First write out the TS packet headers - we will write *around* them in later functions
-  fillOutTSHeaders(outputBuffer, destination, id3Pid);
+//  fillOutTSHeaders(outputBuffer, destination, id3Pid);
+  generateTSHeader(
+    outputBuffer,
+    destination,
+    id3Pid,
+    0,
+    MAX_TS_PAYLOAD,
+    true);
 
   // Write the PES header
   generatePESHeader(outputBuffer, destination + 4, id3PTS, id3Length, paddingNeeded);
   // Write any PES header padding necessary
-  const destinationStart = writeHeaderPadding(outputBuffer, destination, paddingNeeded);
+  const destinationStart = writeHeaderPadding(outputBuffer, destination, paddingNeeded, id3Pid);
   // Fill the rest with ID3 tag data
-  writeID3TagChunked(outputBuffer, destinationStart, data);
+  writeID3TagChunked(outputBuffer, destinationStart, data, id3Pid);
 };
 
 /**
@@ -186,7 +223,7 @@ const generateID3Packets = (outputBuffer, destination, options) => {
  * @param {Object} options - A list of parameters used to drive the segment generation process
  * @returns {Promise<Buffer>}}
  */
-const generateID3Segment = (options) => {
+module.exports = (options) => {
   return new Promise((accept, reject) => {
     const outputLength = calculateOutputBufferLength(options.data.length);
     const outputBuffer = Buffer.allocUnsafe(outputLength);
@@ -199,4 +236,19 @@ const generateID3Segment = (options) => {
   });
 };
 
-module.exports = generateID3Segment;
+/**
+ * Returns a buffer that contains a completely valid MPEG2TS segment containing an ID3 payload
+ *
+ * @param {Object} options - A list of parameters used to drive the segment generation process
+ * @returns {Promise<Buffer>}}
+ */
+module.exports.sync = (options) => {
+  const outputLength = calculateOutputBufferLength(options.data.length);
+  const outputBuffer = Buffer.allocUnsafe(outputLength);
+
+  generatePATPacket(outputBuffer, 0, options);
+  generatePMTPacket(outputBuffer, 188, options);
+  generateID3Packets(outputBuffer, 376, options);
+
+  return outputBuffer;
+};

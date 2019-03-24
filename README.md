@@ -4,7 +4,7 @@ The fat-free ID3-only MPEG2TS segment generator library!
 ## Installation
 As a library (into your fancy project):
 ```sh
-$> npm install id3-ts-lib
+$> npm install @brightcove/id3-ts-lib
 ```
 
 Usage:
@@ -32,7 +32,7 @@ generateID3Segment(options).then((segment) => {
 
 As a very rudimentary executable:
 ```sh
-$> npm install -g id3-ts-lib
+$> npm install -g @brightcove/id3-ts-lib
 
 $> id3-ts 'This is just some example payload...' > test.ts
 ```

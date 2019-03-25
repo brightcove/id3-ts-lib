@@ -10,7 +10,7 @@
     "id3-ts" : "./bin/index.js"
   },
   "scripts": {
-    "test": "mocha ./test/unit"
+    "test": "mocha ./test/unit ./test/integration"
   },
   "repository": {
     "type": "git",

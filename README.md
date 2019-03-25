@@ -38,4 +38,4 @@ $> id3-ts 'This is just some example payload...' > test.ts
 ```
 
 ## Performance
-The entire segment construction process is performed using a single Buffer allocation. All operations are done in place including the ID3-creation which is "chunked" so that the ID3 can be created in-place "around" the TS packet headers. As a result, this code can generate an entire segment for a 4kb payload in about *0.16ms*.
+The entire segment construction process is performed using a single Buffer allocation. All operations are done in place including the ID3-creation which is "chunked" so that the ID3 can be created in-place "around" the TS packet headers. As a result, this code can generate an entire segment for a 4kb payload in about *9.6µs*!

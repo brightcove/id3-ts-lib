@@ -1,7 +1,7 @@
 const { id3TagChunked } = require('../../lib/id3');
 const assert = require('assert');
 
-const testPayload = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis euismod tellus quis turpis tincidunt, et interdum metus rutrum.';
+const testPayload = Buffer.from('Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis euismod tellus quis turpis tincidunt, et interdum metus rutrum.');
 const FRAME_SIZE = testPayload.length + 2 + 1;
 const TAG_SIZE = testPayload.length + 12 + 1;
 
@@ -126,4 +126,15 @@ describe('id3', () => {
     id3TagChunked(b, 17, 15, testPayload.length + 22, testPayload);
     veryifyId3(b, true);
   });
+
+  it('should throw if there is not enough room in the buffer for the id3 tag', () => {
+    const b = Buffer.alloc(TAG_SIZE);
+    assert.throws(
+      () => id3TagChunked(b, 0, 0, testPayload.length + 22, testPayload),
+      {
+        name: 'RangeError',
+        message: /remaining/i,
+      });
+  });
+
 });

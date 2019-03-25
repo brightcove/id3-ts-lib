@@ -194,28 +194,9 @@ const generateID3Packets = (outputBuffer, destination, options) => {
  * Returns a buffer that contains a completely valid MPEG2TS segment containing an ID3 payload
  *
  * @param {Object} options - A list of parameters used to drive the segment generation process
- * @returns {Promise<Buffer>}}
+ * @returns {Buffer}
  */
-module.exports = (options) => {
-  return new Promise((accept, reject) => {
-    const outputLength = calculateOutputBufferLength(options.data.length);
-    const outputBuffer = Buffer.allocUnsafe(outputLength);
-
-    generatePATPacket(outputBuffer, 0, options);
-    generatePMTPacket(outputBuffer, 188, options);
-    generateID3Packets(outputBuffer, 376, options);
-
-    return accept(outputBuffer);
-  });
-};
-
-/**
- * Returns a buffer that contains a completely valid MPEG2TS segment containing an ID3 payload
- *
- * @param {Object} options - A list of parameters used to drive the segment generation process
- * @returns {Promise<Buffer>}}
- */
-module.exports.sync = (options) => {
+const generateSegment = (options) => {
   const outputLength = calculateOutputBufferLength(options.data.length);
   const outputBuffer = Buffer.allocUnsafe(outputLength);
 
@@ -225,3 +206,20 @@ module.exports.sync = (options) => {
 
   return outputBuffer;
 };
+
+/**
+ * Returns a promise that resolves to a buffer that contains a completely valid MPEG2TS
+ * segment containing an ID3 payload
+ *
+ * @param {Object} options - A list of parameters used to drive the segment generation process
+ * @returns {Promise<Buffer>}
+ */
+module.exports = (options) => new Promise((accept, reject) => accept(generateSegment(options)));
+
+/**
+ * Returns a buffer that contains a completely valid MPEG2TS segment containing an ID3 payload
+ *
+ * @param {Object} options - A list of parameters used to drive the segment generation process
+ * @returns {Buffer}
+ */
+module.exports.sync = generateSegment

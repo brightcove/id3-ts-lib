@@ -46,36 +46,6 @@ const padding = Buffer.from([
 ]);
 
 /**
- * Write one or more TS headers directly into a buffer
- *
- * @param {Buffer} outputBuffer - The buffer to write TS headers into every 188 bytes
- * @param {Number} destination - The offset to begin writing into the buffer
- * @param {Number} pid - The PID to use for these new headers
- */
-const fillOutTSHeaders = (outputBuffer, destination, pid) => {
-  // The first TS packet always start a new PES
-  let payloadUnitStartIndicator = true;
-  // Where else should we start?
-  let continuityCounter = 0;
-
-  for (let packetOffset = destination; packetOffset < outputBuffer.length; packetOffset += sizeOf.TS_PACKET) {
-    generateTSHeader(
-      outputBuffer,
-      packetOffset,
-      pid,
-      continuityCounter,
-      MAX_TS_PAYLOAD,
-      payloadUnitStartIndicator);
-
-    // Make sure every other TS header indicates a continuation of the same PES packet
-    payloadUnitStartIndicator = false;
-    // The continutyCounter is only 4-bits but the rollover is handled by the generateTSHeader
-    // so we don't have to worry about it here
-    continuityCounter++;
-  }
-};
-
-/**
  * Write out the appropriate amount of padding taking into account TS packet boundaries.
  * This is only designed to work with an amount of padding that completely fits into the
  * first and second TS packets. Greater amounts will fail.
@@ -104,18 +74,18 @@ const writeHeaderPadding = (outputBuffer, destination, paddingNeeded, id3Pid) =>
 
   let destinationStart = destination + sizeOf.TS_PACKET + paddingRemaining;
   if (paddingRemaining >= 0) {
+    // The padding brings us to the end of the first TS packet so write another TS header
     generateTSHeader(
       outputBuffer,
       destination,
       id3Pid,
       1,
-      MAX_TS_PAYLOAD,
       false);
-    // The padding runneth over into the second TS packet
+
     destinationStart += sizeOf.TS_HEADER_NO_ADAPTATION;
 
     if (destinationStart > NEXT_PAYLOAD_START) {
-      // Write the padding into the second TS packet
+      // Write any remaining padding into the second TS packet
       padding.copy(outputBuffer,
         NEXT_PAYLOAD_START,
         0,
@@ -145,36 +115,41 @@ const writeID3TagChunked = (outputBuffer, destinationStart, data, id3Pid) => {
   let sourceStart = 0;
   let sourceLength = packetEndBoundary(destinationStart) - destinationStart;
   let continuityCounter = 2;
+  const id3DataBuffer = Buffer.from(data);
 
+  // Write the first (possibly only) chunk of ID3 data
   id3TagChunked(
     outputBuffer,
     destinationStart,
     sourceStart,
     Math.min(outputBuffer.length, sourceStart + sourceLength),
-    data);
+    id3DataBuffer);
 
   sourceStart += sourceLength;
   destinationStart += sourceLength;
   sourceLength = MAX_TS_PAYLOAD;
 
+  // If this loop executes, then there is more than one packet of ID3 data
   while (destinationStart < outputBuffer.length) {
+    // Start a new TS packet with a TS header
     generateTSHeader(
       outputBuffer,
       destinationStart,
       id3Pid,
       continuityCounter++,
-      MAX_TS_PAYLOAD,
       false);
 
     destinationStart += sizeOf.TS_HEADER_NO_ADAPTATION;
 
+    // Write another chunk of the ID3 data
     id3TagChunked(
       outputBuffer,
       destinationStart,
       sourceStart,
       Math.min(outputBuffer.length, sourceStart + sourceLength),
-      data);
+      id3DataBuffer);
 
+    // Increment the various "pointers"
     sourceStart += sourceLength;
     destinationStart += sourceLength;
     sourceLength = MAX_TS_PAYLOAD;
@@ -199,14 +174,12 @@ const generateID3Packets = (outputBuffer, destination, options) => {
   const pesPacketLength = id3Length + sizeOf.PES_HEADER + sizeOf.PTS;
   const paddingNeeded = Math.ceil(pesPacketLength / MAX_TS_PAYLOAD) * MAX_TS_PAYLOAD - pesPacketLength;
 
-  // First write out the TS packet headers - we will write *around* them in later functions
-//  fillOutTSHeaders(outputBuffer, destination, id3Pid);
+  // First write out the first TS packet header
   generateTSHeader(
     outputBuffer,
     destination,
     id3Pid,
     0,
-    MAX_TS_PAYLOAD,
     true);
 
   // Write the PES header

@@ -65,7 +65,7 @@ const writeHeaderPadding = (outputBuffer, destination, paddingNeeded, id3Pid) =>
   // This math means that we are assuming outbuffer is TS boundary-aligned
   const paddingStart = destination + 4 + sizeOf.PES_HEADER + sizeOf.PTS;
   const paddingAmount = Math.min(destination + sizeOf.TS_PACKET, paddingNeeded + paddingStart) - paddingStart;
-
+  let continuityCounter = 1;
   // Write the padding into the first TS packet
   padding.copy(outputBuffer,
     paddingStart,
@@ -79,7 +79,7 @@ const writeHeaderPadding = (outputBuffer, destination, paddingNeeded, id3Pid) =>
       outputBuffer,
       destination,
       id3Pid,
-      1,
+      continuityCounter++,
       false);
 
     destinationStart += sizeOf.TS_HEADER_NO_ADAPTATION;
@@ -93,7 +93,7 @@ const writeHeaderPadding = (outputBuffer, destination, paddingNeeded, id3Pid) =>
     }
   }
 
-  return destinationStart;
+  return [destinationStart, continuityCounter];
 };
 
 /**
@@ -111,10 +111,9 @@ const packetEndBoundary = (value) => Math.ceil(value / sizeOf.TS_PACKET) * sizeO
  * @param {String} data - The ID3 tag's TXXX frame payload
  * @returns {Number}
  */
-const writeID3TagChunked = (outputBuffer, destinationStart, data, id3Pid) => {
+const writeID3TagChunked = (outputBuffer, destinationStart, data, id3Pid, continuityCounter) => {
   let sourceStart = 0;
   let sourceLength = packetEndBoundary(destinationStart) - destinationStart;
-  let continuityCounter = 2;
   const id3DataBuffer = Buffer.from(data);
 
   // Write the first (possibly only) chunk of ID3 data
@@ -185,9 +184,9 @@ const generateID3Packets = (outputBuffer, destination, options) => {
   // Write the PES header
   generatePESHeader(outputBuffer, destination + 4, id3PTS, id3Length, paddingNeeded);
   // Write any PES header padding necessary
-  const destinationStart = writeHeaderPadding(outputBuffer, destination, paddingNeeded, id3Pid);
+  const [destinationStart, continuityCounter] = writeHeaderPadding(outputBuffer, destination, paddingNeeded, id3Pid);
   // Fill the rest with ID3 tag data
-  writeID3TagChunked(outputBuffer, destinationStart, data, id3Pid);
+  writeID3TagChunked(outputBuffer, destinationStart, data, id3Pid, continuityCounter);
 };
 
 /**

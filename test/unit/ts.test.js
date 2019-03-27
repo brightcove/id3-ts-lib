@@ -5,7 +5,7 @@ const {
   verifyTs,
  } = require('../utils');
 
-describe('ts', () => {
+describe('./lib/ts', () => {
   it('should generate a TS with a PUSI', () => {
     const b = Buffer.alloc(188);
     generateTSHeader(b, 0, 0x181, 2, true);

@@ -36,36 +36,60 @@ exports.verifyPat = (b, pmtPid) => {
   }
 };
 
-exports.verifyPmt = (b, pmtPid, id3Pid) => {
+exports.verifyPmt = (b, pmtPid, id3Pid, videoPid, audioPid) => {
   verifyTs(b, pmtPid, 0, true);
 
   // Make sure the program_info_length is 17
   const programLength = ((b[15] & 0x0f) << 8) | b[16];
-  assert.equal(programLength, 17);
+  let offset = 17;
+  if (id3Pid) {
+    assert.equal(programLength, 17);
+    // Make sure the metadata_pointer_descriptor is present
+    assert.equal(b[17], 0x25);
+    offset += 17;
+  } else {
+    assert.equal(programLength, 0);
+  }
 
-  // Make sure the metadata_pointer_descriptor is present
-  assert.equal(b[17], 0x25);
+  if (videoPid) {
+    // Make sure the time_metadata track is present
+    assert.equal(b[offset], 0x1b);
+    // Verify the track PID
+    assert.equal(getPid(b.slice(offset)), videoPid);
+    offset += 5;
+  }
 
-  // Make sure the time_metadata track is present
-  assert.equal(b[34], 0x15);
+  if (audioPid) {
+    // Make sure the time_metadata track is present
+    assert.equal(b[offset], 0x0f);
+    // Verify the track PID
+    assert.equal(getPid(b.slice(offset)), audioPid);
+    offset += 5;
+  }
 
-  // Verify the track PID
-  assert.equal(getPid(b.slice(34)), id3Pid);
-
-  // Make sure the metadata_descriptor track is present
-  assert.equal(b[39], 0x26);
+  if (id3Pid) {
+    // Make sure the time_metadata track is present
+    assert.equal(b[offset], 0x15);
+    // Verify the track PID
+    assert.equal(getPid(b.slice(offset)), id3Pid);
+    offset += 5;
+    // Make sure the metadata_descriptor track is present
+    assert.equal(b[offset], 0x26);
+    offset += 15;
+  }
 
   // Verify that the CRC32 is correct
-  assert.equal(b[54], 0x2d);
-  assert.equal(b[55], 0xfe);
-  assert.equal(b[56], 0x93);
-  assert.equal(b[57], 0x8d);
+  assert.notEqual(b[offset++], 0xff);
+  assert.notEqual(b[offset++], 0xff);
+  assert.notEqual(b[offset++], 0xff);
+  assert.notEqual(b[offset++], 0xff);
 
   // Verify complete padding (this is important for security reasons)
-  for (let i = 58; i < 188; i++) {
+  for (let i = offset; i < 188; i++) {
     assert.equal(b[i], 0xff);
   }
 };
+
 exports.verifyPesHeader = (b, pts, dataLength, headerPaddingLength) => {
   // Look for start code
   assert.equal(b[0], 0x00);

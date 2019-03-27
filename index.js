@@ -89,13 +89,11 @@ const writeHeaderPadding = (outputBuffer, destination, paddingNeeded, id3Pid) =>
 
     destinationStart += sizeOf.TS_HEADER_NO_ADAPTATION;
 
-    if (destinationStart > NEXT_PAYLOAD_START) {
-      // Write any remaining padding into the second TS packet
-      padding.copy(outputBuffer,
-        NEXT_PAYLOAD_START,
-        0,
-        destinationStart - NEXT_PAYLOAD_START);
-    }
+    // Write any remaining padding into the second TS packet
+    padding.copy(outputBuffer,
+      NEXT_PAYLOAD_START,
+      0,
+      destinationStart - NEXT_PAYLOAD_START);
   }
 
   return [destinationStart, continuityCounter];

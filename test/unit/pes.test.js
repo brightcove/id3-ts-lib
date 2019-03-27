@@ -2,7 +2,7 @@ const { generatePESHeader } = require('../../lib/pes');
 const assert = require('assert');
 const { verifyPesHeader } = require('../utils');
 
-describe('pes', () => {
+describe('./lib/pes', () => {
   it('should generate a PES with specified PTS', () => {
     const b = Buffer.alloc(14);
     generatePESHeader(b, 0, 6135667565, 100, 20);

@@ -7,7 +7,7 @@ const {
 const testPayload = Buffer.from('Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis euismod tellus quis turpis tincidunt, et interdum metus rutrum.');
 const TAG_SIZE = testPayload.length + 22 + 1;
 
-describe('id3', () => {
+describe('./lib/id3', () => {
   it('should be able to write an entire id3 tag in one go', () => {
     const b = Buffer.alloc(TAG_SIZE);
     id3TagChunked(b, 0, 0, TAG_SIZE, testPayload);

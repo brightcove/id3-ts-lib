@@ -2,7 +2,7 @@ const { generatePATPacket } = require('../../lib/pat');
 const assert = require('assert');
 const { verifyPat } = require('../utils');
 
-describe('pat', () => {
+describe('./lib/pat', () => {
   it('should generate a PAT with specified pmtPid', () => {
     const b = Buffer.alloc(188);
     generatePATPacket(b, 0, {pmtPid: 0x101});

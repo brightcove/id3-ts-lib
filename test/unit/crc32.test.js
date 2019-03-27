@@ -1,7 +1,7 @@
 const { crc32 } = require('../../lib/crc32');
 const assert = require('assert');
 
-describe('crc32', () => {
+describe('./lib/crc32', () => {
   it('should calculate the correct crc32 for a portion of a buffer', () => {
     // Last 4 bytes are to hold the crc32 calculated from the first 4 bytes:
     const b = Buffer.from([0x01, 0x02, 0x03, 0x04, 0x00, 0x00, 0x00, 0x00]);

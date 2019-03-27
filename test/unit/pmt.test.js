@@ -3,11 +3,18 @@ const assert = require('assert');
 
 const { verifyPmt } = require('../utils');
 
-describe('pmt', () => {
+describe('./lib/pmt', () => {
   it('should generate a PMT with specified pmtPid and id3Pid', () => {
     const b = Buffer.alloc(188);
     generatePMTPacket(b, 0, {pmtPid: 0x101, id3Pid: 0x180});
     verifyPmt(b, 0x101, 0x180);
+  });
+
+  it('should generate a PMT with all three possible tracks', () => {
+    const b = Buffer.alloc(188);
+    const options = {pmtPid: 0x101, id3Pid: 0x180, audioPid: 0x102, videoPid: 0x103};
+    generatePMTPacket(b, 0, options);
+    verifyPmt(b, options.pmtPid, options.id3Pid, options.videoPid, options.audioPid);
   });
 
   it('should throw if pmtPid is not a number', () => {

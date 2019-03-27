@@ -1,16 +1,25 @@
 const assert = require('assert');
 
-const getPid = (b) => {
+const getPid = exports.getPid = (b) => {
   return ((b[1] & 0x1f) << 8) | b[2];
 };
 
-exports.getPid = getPid;
-
-exports.verifyPat = (b, pmtPid) => {
+const verifyTs = exports.verifyTs = (b, pid, continuityCounter, payloadUnitStartIndicator) => {
   // Look for sync-byte
   assert.equal(b[0], 0x47);
-  // Make sure the TS PID is 0
-  assert.equal(getPid(b), 0x000);
+
+  // Make sure the TS PID is "pid"
+  assert.equal(getPid(b), pid);
+
+  const pusi = !!(b[1] & 0x40);
+  assert.equal(pusi, payloadUnitStartIndicator);
+
+  const cc = (b[3] & 0x0F);
+  assert.equal(cc, continuityCounter % 16);
+};
+
+exports.verifyPat = (b, pmtPid) => {
+  verifyTs(b, 0, 0, true);
 
   // Make sure the PMT PID is equal to pmtPid
   assert.equal(getPid(b.slice(14)), pmtPid);
@@ -28,10 +37,7 @@ exports.verifyPat = (b, pmtPid) => {
 };
 
 exports.verifyPmt = (b, pmtPid, id3Pid) => {
-  // Look for sync-byte
-  assert.equal(b[0], 0x47);
-  // Make sure the TS PID is pmtPid
-  assert.equal(getPid(b), pmtPid);
+  verifyTs(b, pmtPid, 0, true);
 
   // Make sure the program_info_length is 17
   const programLength = ((b[15] & 0x0f) << 8) | b[16];
@@ -143,4 +149,7 @@ exports.veryifyId3 = (b, expectedPayload) => {
   verifyTagHeader(b.slice(0, tagHeaderEnd), tagLength);
   verifyFrameHeader(b.slice(tagHeaderEnd, frameHeaderEnd), frameLength);
   verifyPayload(b.slice(frameHeaderEnd, expectedPayload.length + headerSize), expectedPayload);
+
+  // Make sure the last byte is a null-terminator
+  assert.equal(b[expectedPayload.length + 22], 0x00);
 };

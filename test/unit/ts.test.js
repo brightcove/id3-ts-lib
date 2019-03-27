@@ -1,21 +1,9 @@
 const { generateTSHeader } = require('../../lib/ts');
 const assert = require('assert');
 
-const { getPid } = require('../utils');
-
-const verifyTs = (b, pid, continuityCounter, payloadUnitStartIndicator) => {
-  // Look for sync-byte
-  assert.equal(b[0], 0x47);
-
-  // Make sure the TS PID is "pid"
-  assert.equal(getPid(b), pid);
-
-  const pusi = !!(b[1] & 0x40);
-  assert.equal(pusi, payloadUnitStartIndicator);
-
-  const cc = (b[3] & 0x0F);
-  assert.equal(cc, continuityCounter % 16);
-};
+const {
+  verifyTs,
+ } = require('../utils');
 
 describe('ts', () => {
   it('should generate a TS with a PUSI', () => {

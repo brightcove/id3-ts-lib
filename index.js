@@ -72,7 +72,12 @@ const writeHeaderPadding = (outputBuffer, destination, paddingNeeded, id3Pid) =>
     0,
     paddingAmount);
 
-  let destinationStart = destination + sizeOf.TS_PACKET + paddingRemaining;
+  // Move the pointer forward to the start of the next packet
+  destination += sizeOf.TS_PACKET;
+  // Calculate the start of the ID3 tag - this could be in the first or second
+  // packet depending on the sign of `paddingRemaining`
+  let destinationStart = destination + paddingRemaining;
+
   if (paddingRemaining >= 0) {
     // The padding brings us to the end of the first TS packet so write another TS header
     generateTSHeader(

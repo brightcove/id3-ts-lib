@@ -18,13 +18,20 @@ if (audioPidIndex === -1) {
 }
 const audioPid = audioPidIndex !== -1 ? args.splice(audioPidIndex, 2)[1] || null : null;
 
+let id3PtsIndex = args.indexOf('-p');
+
+if (id3PtsIndex === -1) {
+  id3PtsIndex = args.indexOf('--id3-pts');
+}
+const id3PTS = id3PtsIndex !== -1 ? Number(args.splice(id3PtsIndex, 2)[1]) || 282743 : 282743;
+
 const data = args.pop();
 
 if (data) {
   const options = {
     pmtPid: 0x100,
     id3Pid: 0x103,
-    id3PTS: 282743,
+    id3PTS,
     videoPid,
     audioPid,
     data

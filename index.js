@@ -172,7 +172,7 @@ const writeID3TagChunked = (outputBuffer, destinationStart, data, id3Pid, contin
 const generateID3Packets = (outputBuffer, destination, options) => {
   const { data, id3Pid, id3PTS } = options;
 
-  const id3Length = calculateId3TagLength(data.length);
+  const id3Length = calculateId3TagLength(Buffer.byteLength(data));
   const pesPacketLength = id3Length + sizeOf.PES_HEADER + sizeOf.PTS;
   const paddingNeeded = Math.ceil(pesPacketLength / MAX_TS_PAYLOAD) * MAX_TS_PAYLOAD - pesPacketLength;
 
@@ -199,7 +199,7 @@ const generateID3Packets = (outputBuffer, destination, options) => {
  * @returns {Buffer}
  */
 const generateSegment = (options) => {
-  const outputLength = calculateOutputBufferLength(options.data.length);
+  const outputLength = calculateOutputBufferLength(Buffer.byteLength(options.data));
   const outputBuffer = Buffer.allocUnsafe(outputLength);
 
   generatePATPacket(outputBuffer, 0, options);

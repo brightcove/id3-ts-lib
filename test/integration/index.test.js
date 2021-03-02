@@ -152,4 +152,51 @@ describe('./index', () => {
     const lastPacket = b.slice(564);
     verifyTs(lastPacket, options.id3Pid, 1, false);
   });
+
+  it('should generate a unicode-encoded segment', () => {
+    const options = {
+      pmtPid: 0x101,
+      id3Pid: 0x180,
+      id3PTS: 1234567890,
+      data: `
+        The quick brown fox jumps over the lazy dog.
+        Falsches Üben von Xylophonmusik quält jeden größeren Zwerg.
+        Съешь же ещё этих мягких французских булок да выпей чаю.
+        זה כיף סתם לשמוע איך תנצח קרפד עץ טוב בגן.
+      `,
+    };
+    const b = generateSegment.sync(options);
+
+    // First, make sure it's exactly 4 TS packets long
+    assert.equal(b.length, 752);
+
+    // Verify the first packet - the PAT
+    verifyPat(b, options.pmtPid);
+
+    // Verify the second packet - the PMT
+    const secondPacket = b.slice(188);
+    verifyPmt(secondPacket, options.pmtPid, options.id3Pid);
+
+    // Verify the third packet - the PES
+    const dataBuffer = Buffer.from(options.data);
+    const thirdPacket = b.slice(376);
+    const pesHeader = thirdPacket.slice(4);
+    const id3TagLength = 10 + 12 + dataBuffer.length + 1;
+    const paddingLength = 368 - (id3TagLength + 14);
+    const id3StartByte = 376 + 4 + 14 + paddingLength;
+
+    verifyTs(thirdPacket, options.id3Pid, 0, true);
+    verifyPesHeader(pesHeader, options.id3PTS, id3TagLength, paddingLength);
+    // console.log(thirdPacket.slice(id3StartByte).toString('hex').replace(/(\w\w)/g, '0x$1, '));
+
+    const id3Tag = Buffer.concat([
+      b.slice(id3StartByte, 564),
+      b.slice(568),
+    ]);
+    veryifyId3(id3Tag, dataBuffer);
+
+    // Verify the last packet - the PES (cont.)
+    const lastPacket = b.slice(564);
+    verifyTs(lastPacket, options.id3Pid, 1, false);
+  });
 });

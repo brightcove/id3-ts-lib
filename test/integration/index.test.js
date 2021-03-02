@@ -30,14 +30,15 @@ describe('./index', () => {
     verifyPmt(secondPacket, options.pmtPid, options.id3Pid);
 
     // Verify the last packet - the PES
+    const dataBuffer = Buffer.from(options.data);
     const lastPacket = b.slice(376);
     const pesHeader = lastPacket.slice(4);
-    const id3TagLength = 10 + 12 + options.data.length + 1;
+    const id3TagLength = 10 + 12 + dataBuffer.length + 1;
     const paddingLength = 184 - (id3TagLength + 14);
     const id3StartByte = 4 + 14 + paddingLength;
 
     verifyPesHeader(pesHeader, options.id3PTS, id3TagLength, paddingLength);
-    veryifyId3(lastPacket.slice(id3StartByte), options.data);
+    veryifyId3(lastPacket.slice(id3StartByte), dataBuffer);
   });
 
   it('should generate a single-TS segment asynchronously', () => {
@@ -60,14 +61,15 @@ describe('./index', () => {
       verifyPmt(secondPacket, options.pmtPid, options.id3Pid);
 
       // Verify the last packet - the PES
+      const dataBuffer = Buffer.from(options.data);
       const lastPacket = b.slice(376);
       const pesHeader = lastPacket.slice(4);
-      const id3TagLength = 10 + 12 + options.data.length + 1;
+      const id3TagLength = 10 + 12 + dataBuffer.length + 1;
       const paddingLength = 184 - (id3TagLength + 14);
       const id3StartByte = 4 + 14 + paddingLength;
 
       verifyPesHeader(pesHeader, options.id3PTS, id3TagLength, paddingLength);
-      veryifyId3(lastPacket.slice(id3StartByte), options.data);
+      veryifyId3(lastPacket.slice(id3StartByte), dataBuffer);
     });
   });
 
@@ -91,9 +93,10 @@ describe('./index', () => {
     verifyPmt(secondPacket, options.pmtPid, options.id3Pid);
 
     // Verify the third packet - the PES
+    const dataBuffer = Buffer.from(options.data);
     const thirdPacket = b.slice(376);
     const pesHeader = thirdPacket.slice(4);
-    const id3TagLength = 10 + 12 + options.data.length + 1;
+    const id3TagLength = 10 + 12 + dataBuffer.length + 1;
     const paddingLength = 368 - (id3TagLength + 14);
     const id3StartByte = 376 + 4 + 14 + paddingLength;
 
@@ -105,7 +108,7 @@ describe('./index', () => {
       b.slice(id3StartByte, 564),
       b.slice(568),
     ]);
-    veryifyId3(id3Tag, options.data);
+    veryifyId3(id3Tag, dataBuffer);
 
     // Verify the last packet - the PES (cont.)
     const lastPacket = b.slice(564);
@@ -132,9 +135,10 @@ describe('./index', () => {
     verifyPmt(secondPacket, options.pmtPid, options.id3Pid);
 
     // Verify the third packet - the PES
+    const dataBuffer = Buffer.from(options.data);
     const thirdPacket = b.slice(376);
     const pesHeader = thirdPacket.slice(4);
-    const id3TagLength = 10 + 12 + options.data.length + 1;
+    const id3TagLength = 10 + 12 + dataBuffer.length + 1;
     const paddingLength = 368 - (id3TagLength + 14);
     const id3StartByte = 4 + 14 + paddingLength + 4;
 
@@ -142,7 +146,7 @@ describe('./index', () => {
     verifyPesHeader(pesHeader, options.id3PTS, id3TagLength, paddingLength);
      // console.log(thirdPacket.slice(id3StartByte).toString('hex').replace(/(\w\w)/g, '0x$1, '));
 
-    veryifyId3(thirdPacket.slice(id3StartByte), options.data);
+    veryifyId3(thirdPacket.slice(id3StartByte), dataBuffer);
 
     // Verify the last packet - the PES (cont.)
     const lastPacket = b.slice(564);

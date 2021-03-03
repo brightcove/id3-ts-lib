@@ -160,7 +160,7 @@ const verifyFrameHeader = (b, frameLength) => {
 };
 
 const verifyPayload = (b, expectedPayload) => {
-  assert.equal(b.toString('utf8'), expectedPayload);
+  assert.deepStrictEqual(b, expectedPayload);
 }
 
 exports.veryifyId3 = (b, expectedPayload) => {

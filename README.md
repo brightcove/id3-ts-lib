@@ -26,7 +26,7 @@ const options = {
 
 // The function returns a promise that resolves to a buffer
 generateID3Segment(options).then((segment) => {
-  fs.writeSync('test.ts', segment);
+  fs.writeFileSync('test.ts', segment);
 });
 ```
 
